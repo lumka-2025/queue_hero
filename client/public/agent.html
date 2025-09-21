@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Queue Hero — Agent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./global.css" />
+  <script defer src="./js/session.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const token = localStorage.getItem('qh_token');
+      const role = localStorage.getItem('qh_role');
+      if (!token || role !== 'agent') {
+        location.href = './login.html?role=agent';
+      }
+    });
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner container">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Queue Hero</div>
+      </div>
+      <nav class="nav">
+        <a class="btn" href="./index.html">Home</a>
+        <button class="btn danger" onclick="logout()">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h2 class="title">Available Queue Requests</h2>
+      <table class="table" id="pending">
+        <thead>
+          <tr><th>ID</th><th>Location</th><th>Store</th><th>Notes</th><th>Action</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="footer">© Queue Hero • Tembisa</footer>
+
+  <script>
+    const API = 'http://localhost:3000';
+    function logout(){ localStorage.clear(); location.href='./index.html'; }
+
+    async function loadPending(){
+      const tbody = document.querySelector('#pending tbody');
+      tbody.innerHTML = '<tr><td colspan="5" class="note">Loading…</td></tr>';
+      const res = await fetch(`${API}/api/requests/pending`);
+      const items = await res.json().catch(()=>[]);
+      tbody.innerHTML = '';
+      items.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.location}</td>
+          <td>${r.store}</td>
+          <td>${r.notes||''}</td>
+          <td><button class="btn success" onclick="accept(${r.id})">Accept</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="note">No pending requests.</td></tr>';
+      }
+    }
+
+    async function accept(id){
+      const res = await fetch(`${API}/api/requests/update`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify({ id, status: 'accepted' })
+      });
+      if(res.ok) loadPending();
+    }
+
+    document.addEventListener('DOMContentLoaded', loadPending);
+  </script>
+</body>
+</html>
+

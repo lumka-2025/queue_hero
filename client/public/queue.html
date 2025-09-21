@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Queue Hero — Customer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./global.css" />
+  <script defer src="./js/session.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Require login & customer role
+      const token = localStorage.getItem('qh_token');
+      const role = localStorage.getItem('qh_role');
+      if (!token || role !== 'customer') {
+        location.href = './login.html?role=customer';
+      }
+    });
+  </script>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner container">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Queue Hero</div>
+      </div>
+      <nav class="nav">
+        <a class="btn" href="./index.html">Home</a>
+        <a class="btn" href="./marketer.html">Book Marketer</a>
+        <button class="btn danger" onclick="logout()">Logout</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h2 class="title">Request an Agent</h2>
+      <div class="grid">
+        <div>
+          <label class="label">Mall/Location</label>
+          <input id="location" class="input" placeholder="Tembisa Mall" />
+        </div>
+        <div>
+          <label class="label">Queue/Store</label>
+          <input id="store" class="input" placeholder="Spar - Money Market" />
+        </div>
+        <div>
+          <label class="label">Queue number (optional)</label>
+          <input id="queue_number" class="input" placeholder="#14" />
+        </div>
+        <div>
+          <label class="label">Other info</label>
+          <input id="notes" class="input" placeholder="Urgent airtime cashout…" />
+        </div>
+      </div>
+      <div class="space"></div>
+      <button class="btn brand" onclick="submitQueue()">Submit Request</button>
+      <div class="space"></div>
+      <div id="msg" class="note"></div>
+    </div>
+
+    <div class="space"></div>
+
+    <div class="card">
+      <h3>Your Recent Requests</h3>
+      <table class="table" id="myRequests">
+        <thead>
+          <tr><th>ID</th><th>Location</th><th>Store</th><th>Status</th><th>Created</th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </main>
+
+  <footer class="footer">© Queue Hero • Tembisa</footer>
+
+  <script>
+    const API = 'http://localhost:3000';
+    function logout(){ localStorage.clear(); location.href='./index.html'; }
+
+    async function submitQueue(){
+      const msg = document.getElementById('msg');
+      msg.textContent = 'Submitting…';
+      const body = {
+        customer_id: Number(localStorage.getItem('qh_id')),
+        location: document.getElementById('location').value.trim(),
+        store: document.getElementById('store').value.trim(),
+        queue_number: document.getElementById('queue_number').value.trim(),
+        notes: document.getElementById('notes').value.trim()
+      };
+      const res = await fetch(`${API}/api/queue/create`, {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json' },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json().catch(()=>({error:'Bad response'}));
+      if(!res.ok){ msg.className='note error'; msg.textContent=data.error||'Failed'; return; }
+      msg.className='note success'; msg.textContent='Request submitted!';
+      loadMyRequests();
+    }
+
+    async function loadMyRequests(){
+      const tbody = document.querySelector('#myRequests tbody');
+      tbody.innerHTML = '<tr><td colspan="5" class="note">Loading…</td></tr>';
+      const id = Number(localStorage.getItem('qh_id'));
+      const res = await fetch(`${API}/api/requests/by-customer/${id}`);
+      const items = await res.json().catch(()=>[]);
+      tbody.innerHTML = '';
+      items.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.id}</td>
+          <td>${r.location}</td>
+          <td>${r.store}</td>
+          <td>${r.status}</td>
+          <td>${r.created_at||''}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="note">No requests yet.</td></tr>';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadMyRequests);
+  </script>
+</body>
+</html>
+

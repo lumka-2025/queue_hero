@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Queue Hero — Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="./global.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner container">
+      <div class="brand">
+        <div class="logo"></div>
+        <div>Queue Hero</div>
+      </div>
+      <nav class="nav">
+        <a class="btn" href="./index.html">Home</a>
+        <a class="btn brand" href="./register.html">Register</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="card">
+      <h2 class="title">Welcome back</h2>
+      <div class="grid">
+        <div>
+          <label class="label">Email</label>
+          <input id="email" type="email" class="input" placeholder="you@example.com" />
+        </div>
+        <div>
+          <label class="label">Password</label>
+          <input id="password" type="password" class="input" placeholder="••••••••" />
+        </div>
+        <div>
+          <label class="label">Role</label>
+          <select id="role" class="input">
+            <option value="customer">Customer</option>
+            <option value="agent">Agent</option>
+            <option value="marketer">Marketer</option>
+          </select>
+        </div>
+      </div>
+      <div class="space"></div>
+      <button id="loginBtn" class="btn brand">Login</button>
+      <div class="space"></div>
+      <div id="msg" class="note"></div>
+    </div>
+  </main>
+
+  <footer class="footer">© Queue Hero • Tembisa</footer>
+
+  <script src="./js/login.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Queue Hero - Welcome</title>
+  <link rel="stylesheet" href="global.css">
+</head>
+<body>
+  <div class="card">
+    <h2>Welcome to Queue Hero</h2>
+    <p>Select your role to continue:</p>
+    <button onclick="selectRole('customer')">I’m a Customer</button>
+    <button onclick="selectRole('agent')">I’m an Agent</button>
+  </div>
+  <script>
+    // if already logged in, skip to dashboard
+    const token = localStorage.getItem('qh_token');
+    const role = localStorage.getItem('qh_role');
+    if (token && role) {
+      if (role === 'agent') {
+        window.location.href = 'agent.html';
+      } else {
+        window.location.href = 'customer.html';
+      }
+    }
+
+    function selectRole(role) {
+      localStorage.setItem('qh_role', role);
+      window.location.href = 'login.html';
+    }
+  </script>
+</body>
+</html>
+

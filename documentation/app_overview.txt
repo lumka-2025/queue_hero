@@ -1,0 +1,89 @@
+1.1 Vision & MVP Scope
+----------------------
+
+Queue Hero helps customers “queue on demand.” At any location—mall, bank, shop—they can:
+
+--> Register/Login
+
+--> Submit a Queue Request by web or WhatsApp webhook
+
+--> Provide: Name, Phone, Location, Store, Current Position, Notes
+
+--> View ETA dynamically as the queue moves
+
+--> Agent Dashboard to accept requests, “stand in line,” update status
+
+--> Accessibility: WCAG-compliant, keyboard-first, screen-reader friendly
+
+--> Theming: Grey-gold-black palette + dark/light toggle
+
+#=====================================================================================================#
+
+1.2 Stakeholders & Benefits
+----------------------------
+
+| Who                         | Benefit                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| **Customers**               | Request proxy-queuing, real-time ETA, no missing place in line                              |
+| **Agents (“Heroes”)**       | Claim tasks to stand in line, update status, earn credits                                   |
+| **Store Managers**          | See pending proxy requests, assign Heroes, monitor queue health                             |
+| **Quantarrior/Katlego**     | Single modular codebase, offline install, low-cost SMS/WhatsApp integration, data analytics |
+| **Accessibility Advocates** | Full keyboard navigation, ARIA labels, high-contrast mode                                   |
+
+#=====================================================================================================#
+
+1.3 Data Model
+--------------
+
+-- users
+CREATE TABLE users(
+  id INTEGER PRIMARY KEY,
+  username TEXT UNIQUE NOT NULL,
+  password_hash TEXT NOT NULL
+);
+
+-- queue_requests
+CREATE TABLE requests(
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  phone TEXT NOT NULL,
+  location TEXT NOT NULL,
+  store TEXT NOT NULL,
+  position INTEGER NOT NULL,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+
+#=====================================================================================================#
+
+1.4 High-Level Flow
+-------------------
+
+[Customer] ─> [Login/Register] ─> [New Request Form]
+   │                                   │
+   │POST /api/requests                 └─> Server stores & emits 'queue:new'
+   │                                   └─> Response { requestId, ETA }
+   │
+   └─ Poll /api/requests/:id for ETA  or Socket.IO 'queue:update'
+
+
+#=====================================================================================================#
+
+
+1.5 Detailed Sequence (Customer)
+
+1. GET / → serve index.html
+2. Login/Register → POST /api/register or /api/login → receive JWT
+3. Fill request form:
+   - name, phone, location, store, position, notes
+4. POST /api/requests (Auth:Bearer JWT)
+5. receive { requestId, ETA_initial }
+6. JS: display ETA, subscribe Socket.IO
+   socket.emit('join', requestId)
+   socket.on('queue:update', fetch ETA → update UI)
+
+
