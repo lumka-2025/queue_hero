@@ -1,92 +1,131 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
-
-const DB_PATH = path.join(__dirname, '..', 'db', 'debate.db');
-const db = new sqlite3.Database(DB_PATH);
-
 const router = express.Router();
+const jwt = require('jsonwebtoken');
 
-// ensure tables (idempotent)
-db.exec(`
-CREATE TABLE IF NOT EXISTS requests (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  details TEXT NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',  -- pending|accepted|completed|cancelled
-  assigned_agent_id INTEGER,
-  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-  updated_at DATETIME,
-  FOREIGN KEY(user_id) REFERENCES users(id),
-  FOREIGN KEY(assigned_agent_id) REFERENCES users(id)
-);
-CREATE INDEX IF NOT EXISTS idx_requests_user ON requests(user_id);
-CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
-`);
+const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_key';
 
-// create request (customer)
-router.post('/requests', (req, res) => {
-  const { user_id, details } = req.body || {};
-  if (!user_id || !details) return res.status(400).json({ error: 'user_id and details required' });
-  const stmt = `INSERT INTO requests (user_id, details) VALUES (?,?)`;
-  db.run(stmt, [user_id, details], function (err) {
-    if (err) return res.status(500).json({ error: 'db error', detail: err.message });
-    res.json({ ok: true, id: this.lastID });
+// Middleware
+function auth(req, res, next) {
+  const header = req.headers.authorization;
+  if (!header) return res.status(401).json({ error: 'Missing token' });
+
+  const token = header.split(' ')[1];
+  try {
+    req.user = jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    return res.status(401).json({ error: 'Invalid token' });
+  }
+}
+
+// Create request
+router.post('/requests', auth, (req, res) => {
+  const db = req.db;
+  const io = req.io;
+
+  const { description, location } = req.body;
+  if (!description || !location)
+    return res.status(400).json({ error: 'Missing fields' });
+
+  const sql = `
+    INSERT INTO requests (user_id, description, location)
+    VALUES (?, ?, ?)
+  `;
+
+  db.run(sql, [req.user.id, description, location], function (err) {
+    if (err) return res.status(500).json({ error: 'DB error' });
+
+    db.get(
+      `SELECT * FROM requests WHERE id = ?`,
+      [this.lastID],
+      (err, row) => {
+        if (row) io.emit('new_request', row);
+        res.json(row);
+      }
+    );
   });
 });
 
-// list my requests (customer)
-router.get('/requests', (req, res) => {
-  const uid = Number(req.query.user_id);
-  if (!uid) return res.status(400).json({ error: 'user_id required' });
-  db.all(`SELECT r.*, u.username AS assigned_agent
-          FROM requests r
-          LEFT JOIN users u ON u.id = r.assigned_agent_id
-          WHERE r.user_id = ?
-          ORDER BY r.created_at DESC`, [uid], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'db error' });
-    res.json({ ok: true, rows });
-  });
+// Get requests
+router.get('/requests', auth, (req, res) => {
+  const db = req.db;
+
+  // agent sees all pending
+  if (req.user.role === 'agent') {
+    db.all(
+      `SELECT * FROM requests WHERE status != 'completed' ORDER BY created_at DESC`,
+      [],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: 'DB error' });
+        res.json(rows);
+      }
+    );
+  }
+
+  // customer only sees their own
+  else {
+    db.all(
+      `SELECT * FROM requests WHERE user_id = ? ORDER BY created_at DESC`,
+      [req.user.id],
+      (err, rows) => {
+        if (err) return res.status(500).json({ error: 'DB error' });
+        res.json(rows);
+      }
+    );
+  }
 });
 
-// agent: open jobs
-router.get('/agent/open', (_req, res) => {
-  db.all(`SELECT r.*, c.username as customer
-          FROM requests r
-          JOIN users c ON c.id = r.user_id
-          WHERE r.status = 'pending'
-          ORDER BY r.created_at ASC`, [], (err, rows) => {
-    if (err) return res.status(500).json({ error: 'db error' });
-    res.json({ ok: true, rows });
-  });
+// Agent assigns
+router.post('/requests/:id/assign', auth, (req, res) => {
+  if (req.user.role !== 'agent')
+    return res.status(403).json({ error: 'Not allowed' });
+
+  const db = req.db;
+  const io = req.io;
+  const { eta } = req.body;
+
+  db.run(
+    `UPDATE requests SET agent_id = ?, status = 'in_progress', eta = ? WHERE id = ?`,
+    [req.user.id, eta || null, req.params.id],
+    function (err) {
+      if (err) return res.status(500).json({ error: 'DB error' });
+
+      db.get(
+        `SELECT * FROM requests WHERE id = ?`,
+        [req.params.id],
+        (err, row) => {
+          if (row) io.emit('update_request', row);
+          res.json(row);
+        }
+      );
+    }
+  );
 });
 
-// agent: accept job
-router.post('/agent/accept', (req, res) => {
-  const { agent_id, request_id } = req.body || {};
-  if (!agent_id || !request_id) return res.status(400).json({ error: 'agent_id and request_id required' });
-  const sql = `UPDATE requests
-               SET status = 'accepted', assigned_agent_id = ?, updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND status = 'pending'`;
-  db.run(sql, [agent_id, request_id], function (err) {
-    if (err) return res.status(500).json({ error: 'db error' });
-    if (this.changes === 0) return res.status(409).json({ error: 'already taken or not pending' });
-    res.json({ ok: true });
-  });
-});
+// Agent completes
+router.post('/requests/:id/complete', auth, (req, res) => {
+  if (req.user.role !== 'agent')
+    return res.status(403).json({ error: 'Not allowed' });
 
-// agent: complete job
-router.post('/agent/complete', (req, res) => {
-  const { agent_id, request_id } = req.body || {};
-  if (!agent_id || !request_id) return res.status(400).json({ error: 'agent_id and request_id required' });
-  const sql = `UPDATE requests
-               SET status = 'completed', updated_at = CURRENT_TIMESTAMP
-               WHERE id = ? AND assigned_agent_id = ? AND status = 'accepted'`;
-  db.run(sql, [request_id, agent_id], function (err) {
-    if (err) return res.status(500).json({ error: 'db error' });
-    if (this.changes === 0) return res.status(409).json({ error: 'not accepted by you or wrong status' });
-    res.json({ ok: true });
-  });
+  const db = req.db;
+  const io = req.io;
+
+  db.run(
+    `UPDATE requests SET status = 'completed' WHERE id = ?`,
+    [req.params.id],
+    function (err) {
+      if (err) return res.status(500).json({ error: 'DB error' });
+
+      db.get(
+        `SELECT * FROM requests WHERE id = ?`,
+        [req.params.id],
+        (err, row) => {
+          if (row) io.emit('update_request', row);
+          res.json(row);
+        }
+      );
+    }
+  );
 });
 
 module.exports = router;

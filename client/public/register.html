@@ -1,60 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>Queue Hero — Register</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./global.css" />
+  <meta charset="utf-8" />
+  <title>Register - Queue Hero</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="global.css" />
 </head>
 <body>
   <header class="header">
-    <div class="header-inner container">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>Queue Hero</div>
-      </div>
-      <nav class="nav">
-        <a class="btn" href="./index.html">Home</a>
-        <a class="btn" href="./login.html">Login</a>
-      </nav>
-    </div>
+    <div class="logo">QH Queue Hero</div>
+    <div class="actions"><a href="index.html" class="btn btn-ghost">Home</a></div>
+    <button id="darkModeToggle">🌙</button>
   </header>
 
   <main class="container">
-    <div class="card">
-      <h2 class="title">Create your account</h2>
-      <div class="grid">
-        <div>
-          <label class="label">Full name</label>
-          <input id="name" class="input" placeholder="Lunga M." />
-        </div>
-        <div>
-          <label class="label">Email</label>
-          <input id="email" type="email" class="input" placeholder="you@example.com" />
-        </div>
-        <div>
-          <label class="label">Password</label>
-          <input id="password" type="password" class="input" placeholder="••••••••" />
-        </div>
-        <div>
-          <label class="label">Role</label>
-          <select id="role" required>
-            <option value="customer">Customer</option>
-            <option value="agent">Agent</option>
-            <option value="marketer">Marketer</option>
-          </select>
-        </div>
+    <section class="card">
+      <h1>Register</h1>
+      <div>
+        <label>Username</label><br/>
+        <input id="username" class="input" />
       </div>
-      <div class="space"></div>
-      <button id="registerBtn" class="btn brand">Register</button>
-      <div class="space"></div>
-      <div id="msg" class="note"></div>
-    </div>
+      <div style="margin-top:8px;">
+        <label>Password</label><br/>
+        <input id="password" type="password" class="input" />
+      </div>
+      <div style="margin-top:8px;">
+        <label>Role</label><br/>
+        <select id="role" class="input">
+          <option value="customer">Customer</option>
+          <option value="agent">Agent</option>
+          <option value="marketer">Marketer</option>
+        </select>
+      </div>
+
+      <div style="margin-top:12px;">
+        <button id="registerBtn" class="btn">Register</button>
+      </div>
+
+      <p id="msg" class="small" style="margin-top:12px;color:crimson"></p>
+    </section>
   </main>
 
-  <footer class="footer">© Queue Hero • Tembisa</footer>
-
-  <script src="./js/register.js"></script>
+  <script src="js/global.js"></script>
+  <script src="js/register.js"></script>
 </body>
 </html>
 

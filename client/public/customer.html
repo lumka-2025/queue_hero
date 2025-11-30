@@ -1,30 +1,40 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>QHero - Customer Dashboard</title>
-  <link rel="stylesheet" href="global.css">
+  <meta charset="utf-8" />
+  <title>Customer Dashboard - Queue Hero</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="global.css" />
 </head>
 <body>
-  <div class="container">
-    <h1>Customer Dashboard</h1>
-    <form id="queueForm">
-      <input type="text" id="location" placeholder="Mall / Location" required>
-      <input type="text" id="store" placeholder="Queue (e.g. Spar Money Market)" required>
-      <input type="number" id="position" placeholder="Your position in line" required>
-      <textarea id="notes" placeholder="Additional info"></textarea>
-      <button type="submit" class="btn">Request Queue Assistance</button>
-    </form>
-
-    <div id="queueStatus">
-      <h3>Your Queue Requests</h3>
-      <ul id="statusList"></ul>
+  <header class="header">
+    <div class="logo">QH Queue Hero</div>
+    <div class="actions">
+      <a href="index.html" class="btn btn-ghost">Home</a>
+      <button id="darkModeToggle">🌙</button>
+      <button id="logoutBtn" class="btn">Logout</button>
     </div>
+  </header>
 
-    <button onclick="logout()" class="btn-secondary">🚪 Logout</button>
-    <button onclick="window.location.href='index.html'" class="btn-secondary">⬅ Home</button>
-  </div>
+  <main class="container">
+    <section class="card">
+      <h1>Submit a Request</h1>
+      <label>Request Details</label><br/>
+      <textarea id="description" class="input" rows="3"></textarea>
+      <label style="margin-top:8px;">Location / Store</label><br/>
+      <input id="location" class="input" />
+      <div style="margin-top:12px;">
+        <button id="submitReq" class="btn">Submit</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Your Requests</h2>
+      <ul id="requests" class="request-list"></ul>
+    </section>
+  </main>
+
+  <script src="js/global.js"></script>
   <script src="js/customer.js"></script>
 </body>
 </html>

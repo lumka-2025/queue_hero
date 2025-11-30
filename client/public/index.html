@@ -1,68 +1,37 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Queue Hero — Welcome</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./global.css" />
-  <script defer src="./js/session.js"></script>
-  <script>
-    // Redirect to home if already logged in
-    document.addEventListener('DOMContentLoaded', () => {
-      const token = localStorage.getItem('qh_token');
-      if (token) {
-        // go to the correct home
-        const role = localStorage.getItem('qh_role');
-        if (role === 'agent') location.href = './agent.html';
-        else if (role === 'marketer') location.href = './marketer.html';
-        else location.href = './queue.html';
-      }
-    });
-  </script>
+  <meta charset="utf-8" />
+  <title>Queue Hero - Welcome</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="global.css" />
 </head>
 <body>
   <header class="header">
-    <div class="header-inner container">
-      <div class="brand">
-        <div class="logo"></div>
-        <div>Queue Hero</div>
-      </div>
-      <nav class="nav">
-        <a class="btn" href="./login.html">Login</a>
-        <a class="btn brand" href="./register.html">Register</a>
-      </nav>
+    <div class="logo">QH <span style="font-weight:600">Queue Hero</span></div>
+    <div class="actions">
+    <button id="darkModeToggle">🌙</button>
     </div>
   </header>
 
   <main class="container">
-    <section class="hero">
-      <span class="badge">Township Convenience</span>
-      <h1 class="title">Skip the queue. Get time back.</h1>
-      <p class="subtitle">Book a Queue Agent, request a Marketer for brand activations, or become an Agent/Marketer.</p>
-      <div class="grid">
-        <div class="card">
-          <h3>Customer</h3>
-          <p class="note">Need someone to hold your spot in line?</p>
-          <div class="space"></div>
-          <a class="btn success" href="./login.html?role=customer">I’m a Customer</a>
-        </div>
-        <div class="card">
-          <h3>Agent</h3>
-          <p class="note">Earn by queuing for customers.</p>
-          <div class="space"></div>
-          <a class="btn" href="./login.html?role=agent">I’m an Agent</a>
-        </div>
-        <div class="card">
-          <h3>Marketer</h3>
-          <p class="note">Book/accept stilt-walker/activation requests.</p>
-          <div class="space"></div>
-          <a class="btn" href="./login.html?role=marketer">I’m a Marketer</a>
-        </div>
+    <section class="card" style="text-align:center">
+      <h1>Welcome to Queue Hero</h1>
+      <p>Choose your role to continue</p>
+      <div style="display:flex;gap:12px;justify-content:center;margin-top:16px">
+        <a class="btn" href="login.html?role=customer">I am a Customer</a>
+        <a class="btn" href="login.html?role=agent">I am an Agent</a>
+        <a class="btn" href="login.html?role=marketer">I am a Marketer</a>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>About</h2>
+      <p>Queue Hero connects customers with verified agents who can stand in line on their behalf. Marketers can book performers for activations (stilt walkers etc.).</p>
     </section>
   </main>
 
-  <footer class="footer">© Queue Hero • Made in Tembisa</footer>
+  <script src="js/global.js"></script>
 </body>
 </html>
 
